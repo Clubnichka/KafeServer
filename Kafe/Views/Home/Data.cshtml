@@ -1,0 +1,17 @@
+﻿@model IEnumerable<Kafe.Models.User>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div>
+    @if (Model != null)
+    {
+        @foreach (var i in Model)
+        {
+            <p>@i.Name</p>
+            <p>@i.Password</p>
+            <p>@i.Level</p>
+        }
+    }
+</div>

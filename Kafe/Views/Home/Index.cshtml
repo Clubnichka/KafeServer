@@ -1,0 +1,81 @@
+﻿@model IEnumerable<Kafe.Models.User>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<div>
+    <form asp-action="DO" asp-controller="Home" method="post">
+        <button>
+            PRESS TO ENTER
+        </button>
+    </form>
+
+</div>
+
+
+<div>
+    <form asp-action ="DO1" asp-controller="Home" method="post">
+        <button>
+            PRESS TO SHOW
+        </button>
+    </form>
+    
+</div>
+<div>
+    <form asp-action="DO2" asp-controller="Home" method="post">
+        <button>
+            ADD PRODUCTS
+        </button>
+    </form>
+
+</div>
+
+<div>
+    <form asp-action="DO3" asp-controller="Home" method="post">
+        <button>
+            ADD PROMOTION
+        </button>
+    </form>
+
+</div>
+
+<div>
+    <form asp-action="DO4" asp-controller="Home" method="post">
+        <button>
+            ADD SPECIALOFFER
+        </button>
+    </form>
+
+</div>
+
+<div>
+    <form asp-action="DO5" asp-controller="Home" method="post">
+        <button>
+            MAKE ORDER
+        </button>
+    </form>
+
+</div>
+
+<div>
+    <form asp-action="DO7" asp-controller="Home" method="post">
+        <button>
+            SEE ORDER
+        </button>
+    </form>
+
+</div>
+
+<div>
+    <form asp-action="DO6" asp-controller="Home" method="post">
+        <button>
+            Watch promotions
+        </button>
+    </form>
+
+</div>

@@ -1,0 +1,20 @@
+﻿@model Promotion
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div>
+    @if (Model != null)
+    {
+        @foreach (var i in Model.Products)
+        {
+            <p>@i.Name</p>
+            <p>@i.Description</p>
+            <p>@i.Price</p>
+        }
+        <p>@Model.Name</p>
+        <p>@Model.Description</p>
+
+    }
+</div>

@@ -1,0 +1,46 @@
+﻿@model List<Order>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+<div class="div-border-inside">
+    @foreach(var order in Model)
+    {
+        <div class="border">
+            @if (order != null)
+            {
+                @foreach (var i in order.Products)
+                {
+                    <div class="border">
+                        <p>@i.Name</p>
+                        <p>@i.Description</p>
+                        <p>@i.Price</p>
+                    </div>
+                }
+                @if (order.SpecialOffers != null)
+                {
+                    @foreach (var i in order.SpecialOffers)
+                    {
+                        <div class="border">
+                            <p>@i.Name</p>
+                            <p>@i.Description</p>
+                            <p>@i.Price</p>
+                        </div>
+                        @foreach (var j in i.Products)
+                        {
+                            <div class="border">
+                                <p>@j.Name</p>
+                                <p>@j.Description</p>
+                                <p>@j.Price</p>
+                            </div>
+                        }
+                    }
+                }
+                
+                <p>@order.User.Name</p>
+
+            }
+        </div>
+
+    }
+</div>
