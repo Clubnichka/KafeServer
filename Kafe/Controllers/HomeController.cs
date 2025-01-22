@@ -34,6 +34,15 @@ namespace Kafe.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("getProducts")]
+        public IActionResult getProducts()
+        {
+            var products = db.Products.Where(p => p.IsActive == 1);
+
+            return Ok(products);
+        }
+
         [HttpGet("getPromotions")]
         public IActionResult getPromotions()
         {
@@ -79,12 +88,35 @@ namespace Kafe.Controllers
         [HttpGet("getProductsByOrderId")]
         public IActionResult getProductsByOrderId([FromQuery]int orderid)
         {
-            var order=db.Orders.Include(o=>o.Products).Where(o=>o.Id.Equals(orderid)).FirstOrDefault();
-            List<Product> products= new List<Product>();
-            foreach(Product p in order.Products)
+            var order = db.Orders.Include(o => o.Products).Where(o => o.Id.Equals(orderid)).FirstOrDefault();
+            if (order == null)
             {
-                products.Add(new Product {Id=p.Id, Name=p.Name, Price=p.Price, Description=p.Description });
+                return NotFound(); // Обработка случая, когда заказ не найден
             }
+
+            List<Product> products = new List<Product>();
+
+            // Группируем продукты по Id и добавляем их в результат с учетом количества
+            var groupedProducts = order.Products.GroupBy(p => p.Id);
+
+            foreach (var group in groupedProducts)
+            {
+                var product = group.First(); // Берем первый продукт из группы
+                int count = group.Count(); // Количество вхождений
+
+                // Добавляем продукт столько раз, сколько он встречается
+                for (int i = 0; i < count; i++)
+                {
+                    products.Add(new Product
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Price = product.Price,
+                        Description = product.Description
+                    });
+                }
+            }
+
             return Ok(products);
         }
 
@@ -175,16 +207,43 @@ namespace Kafe.Controllers
             return Ok(level);
         }
 
+        public class ProductDto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public int Price { get; set; }
+            public string Description { get; set; }
+        }
+
         [HttpPost("addOrder")]
-        public IActionResult addOrder([FromQuery] List<int> ids, [FromQuery] List<int> ids2, [FromQuery] int userid) {
-            var products = db.Products.Where(p => ids.Contains(p.Id)).ToList();
+        public IActionResult addOrder([FromQuery] List<int> ids, [FromQuery] List<int> ids2, [FromQuery] int userid)
+        {
+            var productGroups = ids.GroupBy(id => id)
+                       .Select(group => new { Id = group.Key, Count = group.Count() })
+                       .ToList();
+
+            // Создаем список продуктов
+            var products = new List<Product>();
+
+            // Получаем продукты из базы данных и добавляем их в список нужное количество раз
+            foreach (var group in productGroups)
+            {
+                var product = db.Products.FirstOrDefault(p => p.Id == group.Id);
+                if (product != null)
+                {
+                    for (int i = 0; i < group.Count; i++)
+                    {
+                        products.Add(product);
+                    }
+                }
+            }
             var offers = db.SpecialOffers.Where(o => ids2.Contains(o.Id)).ToList();
-            Order order = new Order{Products=products,SpecialOffers=offers, UserId=userid, Status=1};
+            Order order = new Order { Products = products, SpecialOffers = offers, UserId = userid, Status = 1 };
             db.Orders.Add(order);
             db.SaveChanges();
-            User u = db.Users.Include(u=>u.Orders).First(u => u.Id == userid);
-            int ordernumber= u.Orders.Count();
-            int level=1;
+            User u = db.Users.Include(u => u.Orders).First(u => u.Id == userid);
+            int ordernumber = u.Orders.Count();
+            int level = 1;
             if (ordernumber >= 2 && ordernumber < 10)
             {
                 level = 2;
@@ -208,12 +267,31 @@ namespace Kafe.Controllers
         {
             if (type == 1)
             {
-                var products = db.Products.Where(p => ids.Contains(p.Id)).ToList();
+                var productGroups = ids.GroupBy(id => id)
+                        .Select(group => new { Id = group.Key, Count = group.Count() })
+                        .ToList();
+
+                // Создаем список продуктов
+                var products = new List<Product>();
+
+                // Получаем продукты из базы данных и добавляем их в список нужное количество раз
+                foreach (var group in productGroups)
+                {
+                    var product = db.Products.FirstOrDefault(p => p.Id == group.Id);
+                    if (product != null)
+                    {
+                        for (int i = 0; i < group.Count; i++)
+                        {
+                            products.Add(product);
+                        }
+                    }
+                }
                 Order order = new Order { Products = products, UserId = userid, Status = 1 };
                 db.Orders.Add(order);
                 db.SaveChanges();
             }
-            else if (type == 2) {
+            else if (type == 2)
+            {
                 var offers = db.SpecialOffers.Where(o => ids.Contains(o.Id)).ToList();
                 Order order = new Order { SpecialOffers = offers, UserId = userid, Status = 1 };
                 db.Orders.Add(order);
@@ -240,6 +318,30 @@ namespace Kafe.Controllers
             return Ok("Success");
         }
 
+        private void UpdateUserLevel(int userid)
+        {
+            User u = db.Users.Include(u => u.Orders).First(u => u.Id == userid);
+            int ordernumber = u.Orders.Count();
+            int level = 1;
+
+            if (ordernumber >= 2 && ordernumber < 10)
+            {
+                level = 2;
+            }
+            else if (ordernumber >= 10 && ordernumber < 15)
+            {
+                level = 3;
+            }
+            else if (ordernumber >= 15)
+            {
+                level = 4;
+            }
+
+            u.Level = level;
+            db.Update(u);
+            db.SaveChanges();
+        }
+
         //[HttpPost("addOrder1")]
         //public IActionResult addOrder([FromQuery] List<int> ids, [FromQuery] int userid)
         //{
@@ -252,18 +354,24 @@ namespace Kafe.Controllers
         [HttpGet("getProductsByIds")]
         public IActionResult GetProductsByIds([FromQuery] List<int> ids)
         {
+            // Получаем продукты по id
             var products = db.Products.Where(p => ids.Contains(p.Id)).ToList();
-            return Ok(products);
-        }
 
-       
-        [HttpGet]
-        [Route("getProducts")]
-        public IActionResult getProducts()
-        {
-            var products = db.Products.Where(p=>p.IsActive==1);
-           
-            return Ok(products);
+            // Создаем список для хранения результатов
+            var result = new List<Product>();
+
+            // Группируем идентификаторы и добавляем продукты в результат в соответствии с количеством их вхождений
+            foreach (var group in ids.GroupBy(id => id))
+            {
+                var product = products.FirstOrDefault(p => p.Id == group.Key);
+                if (product != null)
+                {
+                    // Добавляем продукт столько раз, сколько раз он встречается в ids
+                    result.AddRange(Enumerable.Repeat(product, group.Count()));
+                }
+            }
+
+            return Ok(result);
         }
 
         //[HttpGet("enter")]
